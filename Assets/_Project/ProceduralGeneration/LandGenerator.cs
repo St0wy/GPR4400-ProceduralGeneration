@@ -9,6 +9,9 @@ namespace ProcGen.ProceduralGeneration
 	[ExecuteInEditMode]
 	public class LandGenerator : MonoBehaviour
 	{
+		private const float MinSeed = 0f;
+		private const float MaxSeed = 300f;
+
 		[MustBeAssigned] [SerializeField] private Tilemap landTilemap;
 		[MustBeAssigned] [SerializeField] private TileBase groundTile;
 		[MustBeAssigned] [SerializeField] private Tilemap waterTilemap;
@@ -20,8 +23,18 @@ namespace ProcGen.ProceduralGeneration
 		{
 			perlinMapGenerator = new PerlinMapGenerator()
 			{
-				Origin = new Vector2(Random.Range(0, 10), Random.Range(0, 10)),
+				Origin = new Vector2(
+					Random.Range(MinSeed, MaxSeed),
+					Random.Range(MinSeed, MaxSeed)
+				),
 			};
+		}
+
+		[ButtonMethod]
+		public void Regenerate()
+		{
+			NewSeed();
+			GenerateWithPerlin();
 		}
 
 		[ButtonMethod]
@@ -30,6 +43,15 @@ namespace ProcGen.ProceduralGeneration
 			landTilemap.ClearAllTiles();
 			FillWater();
 			Generate(perlinMapGenerator);
+		}
+
+		[ButtonMethod]
+		public void NewSeed()
+		{
+			perlinMapGenerator.Origin = new Vector2(
+				Random.Range(MinSeed, MaxSeed),
+				Random.Range(MinSeed, MaxSeed)
+			);
 		}
 
 		private void FillWater()

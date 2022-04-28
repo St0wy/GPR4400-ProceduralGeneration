@@ -6,6 +6,12 @@ using Random = UnityEngine.Random;
 
 namespace ProcGen.ProceduralGeneration
 {
+	public enum GeneratorType
+	{
+		PerlinNoise,
+		CellularAutomaton,
+	}
+
 	[ExecuteInEditMode]
 	public class LandGenerator : MonoBehaviour
 	{
@@ -17,7 +23,9 @@ namespace ProcGen.ProceduralGeneration
 		[MustBeAssigned] [SerializeField] private Tilemap waterTilemap;
 		[MustBeAssigned] [SerializeField] private TileBase waterTile;
 		[SerializeField] private Size mapSize;
+		[SerializeField] private GeneratorType currentGeneratorType;
 		[SerializeField] private PerlinMapGenerator perlinMapGenerator;
+		[SerializeField] private CellularAutomatonMapGenerator cellularAutomatonMapGenerator;
 
 		private void Awake()
 		{
@@ -28,13 +36,24 @@ namespace ProcGen.ProceduralGeneration
 					Random.Range(MinSeed, MaxSeed)
 				),
 			};
+			cellularAutomatonMapGenerator = new CellularAutomatonMapGenerator();
 		}
 
 		[ButtonMethod]
 		public void Regenerate()
 		{
 			NewSeed();
-			GenerateWithPerlin();
+			switch (currentGeneratorType)
+			{
+				case GeneratorType.PerlinNoise:
+					GenerateWithPerlin();
+					break;
+				case GeneratorType.CellularAutomaton:
+					GenerateWithCellularAutomaton();
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
 		}
 
 		[ButtonMethod]
@@ -46,8 +65,17 @@ namespace ProcGen.ProceduralGeneration
 		}
 
 		[ButtonMethod]
+		public void GenerateWithCellularAutomaton()
+		{
+			landTilemap.ClearAllTiles();
+			FillWater();
+			Generate(cellularAutomatonMapGenerator);
+		}
+
+		[ButtonMethod]
 		public void NewSeed()
 		{
+			Random.InitState((int) DateTime.Now.Ticks);
 			perlinMapGenerator.Origin = new Vector2(
 				Random.Range(MinSeed, MaxSeed),
 				Random.Range(MinSeed, MaxSeed)
@@ -69,14 +97,14 @@ namespace ProcGen.ProceduralGeneration
 
 		private void Generate(IMapGenerator generator)
 		{
-			int[,] map = generator.GenerateMap(mapSize);
+			var map = generator.GenerateMap(mapSize);
 			var area = new BoundsInt(0, 0, 0, mapSize.Width, mapSize.Height, 1);
 			var tileArray = new TileBase[area.size.x * area.size.y];
 			for (var x = 0; x < mapSize.Width; x++)
 			{
 				for (var y = 0; y < mapSize.Height; y++)
 				{
-					if (map[x, y] > 0)
+					if (map[x, y] == CellStatus.Ground)
 					{
 						tileArray[x + (y * area.size.y)] = groundTile;
 					}

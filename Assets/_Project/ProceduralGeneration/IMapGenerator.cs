@@ -2,6 +2,6 @@
 {
 	public interface IMapGenerator
 	{
-		int[,] GenerateMap(Size mapSize);
+		CellStatus[,] GenerateMap(Size mapSize);
 	}
 }

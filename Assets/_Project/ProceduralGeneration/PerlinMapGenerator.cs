@@ -22,9 +22,9 @@ namespace ProcGen.ProceduralGeneration
 		[field: SerializeField, ReadOnly]
 		public Vector2 Origin { get; set; }
 
-		public int[,] GenerateMap(Size mapSize)
+		public CellStatus[,] GenerateMap(Size mapSize)
 		{
-			var world = new int[mapSize.Width, mapSize.Height];
+			var world = new CellStatus[mapSize.Width, mapSize.Height];
 
 			for (var x = 0; x < mapSize.Width; x++)
 			{
@@ -35,11 +35,11 @@ namespace ProcGen.ProceduralGeneration
 					float sample = Mathf.PerlinNoise(xCoord, yCoord);
 					if (sample > Threshold)
 					{
-						world[x, y] = 1;
+						world[x, y] = CellStatus.Ground;
 					}
 					else
 					{
-						world[x, y] = 0;
+						world[x, y] = CellStatus.Empty;
 					}
 				}
 			}

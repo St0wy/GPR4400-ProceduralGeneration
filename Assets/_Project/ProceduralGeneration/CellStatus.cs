@@ -4,5 +4,6 @@
 	{
 		Empty = 0,
 		Ground = 1,
+		Max,
 	}
 }

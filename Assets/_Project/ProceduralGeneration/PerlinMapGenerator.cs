@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using MyBox;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace ProcGen.ProceduralGeneration
 		[field: SerializeField, Range(0, 1)]
 		public float Threshold { get; set; } = 0.5f;
 
-		[field: SerializeField, Range(1, 10)] public float Scale { get; set; } = 1f;
+		[field: SerializeField, Range(1, 20)] public float Scale { get; set; } = 10f;
 
 		/// <summary>
 		/// Gets or sets the origin of the perlin noise.
@@ -26,7 +27,7 @@ namespace ProcGen.ProceduralGeneration
 		{
 			var world = new CellStatus[mapSize.Width, mapSize.Height];
 
-			for (var x = 0; x < mapSize.Width; x++)
+			Parallel.For(0, mapSize.Width, x =>
 			{
 				for (var y = 0; y < mapSize.Height; y++)
 				{
@@ -42,7 +43,7 @@ namespace ProcGen.ProceduralGeneration
 						world[x, y] = CellStatus.Empty;
 					}
 				}
-			}
+			});
 
 			return world;
 		}

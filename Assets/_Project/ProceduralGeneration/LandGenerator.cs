@@ -1,4 +1,6 @@
 using System;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
 using MyBox;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -39,7 +41,8 @@ namespace ProcGen.ProceduralGeneration
 			cellularAutomatonMapGenerator = new CellularAutomatonMapGenerator();
 		}
 
-		[ButtonMethod]
+		[UsedImplicitly]
+		[ButtonMethod(ButtonMethodDrawOrder.BeforeInspector)]
 		public void Regenerate()
 		{
 			NewSeed();
@@ -59,8 +62,6 @@ namespace ProcGen.ProceduralGeneration
 		[ButtonMethod]
 		public void GenerateWithPerlin()
 		{
-			landTilemap.ClearAllTiles();
-			FillWater();
 			Generate(perlinMapGenerator);
 		}
 
@@ -75,7 +76,7 @@ namespace ProcGen.ProceduralGeneration
 		[ButtonMethod]
 		public void NewSeed()
 		{
-			Random.InitState((int) DateTime.Now.Ticks);
+			StaticRandom.InitState(Environment.TickCount);
 			perlinMapGenerator.Origin = new Vector2(
 				Random.Range(MinSeed, MaxSeed),
 				Random.Range(MinSeed, MaxSeed)
@@ -98,8 +99,17 @@ namespace ProcGen.ProceduralGeneration
 		private void Generate(IMapGenerator generator)
 		{
 			var map = generator.GenerateMap(mapSize);
+			DrawMap(map);
+		}
+
+		private void DrawMap(CellStatus[,] map)
+		{
+			landTilemap.ClearAllTiles();
+			FillWater();
+
 			var area = new BoundsInt(0, 0, 0, mapSize.Width, mapSize.Height, 1);
 			var tileArray = new TileBase[area.size.x * area.size.y];
+
 			for (var x = 0; x < mapSize.Width; x++)
 			{
 				for (var y = 0; y < mapSize.Height; y++)

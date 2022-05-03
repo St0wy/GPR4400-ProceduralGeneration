@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MyBox;
-using Unity.VisualScripting;
-using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 
 namespace ProcGen.ProceduralGeneration
 {
+	public enum FloodFillBehaviour
+	{
+		KeepOnlyBiggestIsland,
+		RemoveSmallIslands,
+	}
+
 	[Serializable]
 	public class CellularAutomatonMapGenerator : IMapGenerator
 	{
@@ -17,7 +21,14 @@ namespace ProcGen.ProceduralGeneration
 
 		[Range(0, 1)] [SerializeField] private double chanceToBeGround = 0.55d;
 
-		[SerializeField] private int smallIslandSize = 30;
+		[SerializeField] private FloodFillBehaviour floodFillBehaviour;
+
+		[ConditionalField(
+			nameof(floodFillBehaviour),
+			false,
+			FloodFillBehaviour.RemoveSmallIslands)]
+		[SerializeField]
+		private int smallIslandSize = 30;
 
 		public CellStatus[,] GenerateMap(Size mapSize)
 		{
@@ -73,76 +84,98 @@ namespace ProcGen.ProceduralGeneration
 
 		public CellStatus[,] RemoveSmallIslands(CellStatus[,] cells)
 		{
+			int maxX = cells.GetLength(0);
+			int maxY = cells.GetLength(1);
+
 			var newCells = (CellStatus[,]) cells.Clone();
 
-			List<List<Vector2Int>> areasCoords = new();
+			int[,] areas = FindAreas(cells, out var areaCounts);
 
-			FindAreas(cells, areasCoords);
-
-			// Removed the coordinates contained in the List<List<>>
-			// that are smaller that the specified island size
-			foreach (Vector2Int position in from positions in areasCoords
-			         let areaSize = positions.Count
-			         where areaSize <= smallIslandSize
-			         from position in positions
-			         select position)
+			switch (floodFillBehaviour)
 			{
-				cells[position.x, position.y] = CellStatus.Empty;
+				case FloodFillBehaviour.KeepOnlyBiggestIsland:
+				{
+					int biggestIndex = areaCounts.MaxIndex();
+
+					for (var x = 0; x < maxX; x++)
+					{
+						for (var y = 0; y < maxY; y++)
+						{
+							if (areas[x, y] != biggestIndex)
+							{
+								newCells[x, y] = CellStatus.Empty;
+							}
+						}
+					}
+
+					break;
+				}
+				case FloodFillBehaviour.RemoveSmallIslands:
+				{
+					for (var x = 0; x < maxX; x++)
+					{
+						for (var y = 0; y < maxY; y++)
+						{
+							if (areas[x, y] != 0 && areaCounts[areas[x, y]] <= smallIslandSize)
+							{
+								newCells[x, y] = CellStatus.Empty;
+							}
+						}
+					}
+
+					break;
+				}
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 
 			return newCells;
 		}
 
-		private void FindAreas(CellStatus[,] cells, List<List<Vector2Int>> areasCoords)
+		private int[,] FindAreas(CellStatus[,] cells, out List<int> areaCounts)
 		{
 			int maxX = cells.GetLength(0);
 			int maxY = cells.GetLength(1);
 
+			areaCounts = new List<int> {0};
+			var areas = new int[maxX, maxY];
+
+			var currentId = 1;
 			for (var x = 0; x < maxX; x++)
 			{
 				for (var y = 0; y < maxY; y++)
 				{
-					List<Vector2Int> newCoords = new();
-					FillArea(areasCoords, cells, new Vector2Int(x, y), newCoords);
-					if (newCoords.Count > 0)
+					var count = 0;
+
+					void FillArea(Vector2Int pos)
 					{
-						areasCoords.Add(newCoords);
+						while (true)
+						{
+							if (pos.x < 0 || pos.y < 0 || pos.x >= maxX || pos.y >= maxY) return;
+							if (!(cells[pos.x, pos.y] == CellStatus.Ground && areas[pos.x, pos.y] == 0)) return;
+
+							areas[pos.x, pos.y] = currentId;
+							count++;
+
+							pos.x += 1;
+							FillArea(pos);
+							pos.x -= 2;
+							FillArea(pos);
+							pos.x += 1;
+							pos.y += 1;
+							FillArea(pos);
+							pos.y -= 2;
+						}
 					}
+
+					FillArea(new Vector2Int(x, y));
+					if (count <= 0) continue;
+					areaCounts.Add(count);
+					currentId++;
 				}
 			}
-		}
 
-		/// <summary>
-		/// Fills the area of the cell at the specified position.
-		/// </summary>
-		/// <param name="areasCoords">The list of coordinates of every areas.</param>
-		/// <param name="cells">The array containing the world.</param>
-		/// <param name="pos">The coordinate to check the area of.</param>
-		/// <param name="newCoords">The array for the current area.</param>
-		private void FillArea(IEnumerable<List<Vector2Int>> areasCoords, CellStatus[,] cells, Vector2Int pos,
-			ICollection<Vector2Int> newCoords)
-		{
-			if (pos.x < 0 || pos.y < 0 ||
-			    pos.x >= cells.GetLength(0) || pos.y >= cells.GetLength(1))
-				return;
-			var coords = areasCoords as List<Vector2Int>[] ?? areasCoords.ToArray();
-			bool isInList = IsInList(coords, pos) && !newCoords.Contains(pos);
-			if (!(cells[pos.x, pos.y] == CellStatus.Ground && !isInList)) return;
-
-			newCoords.Add(pos);
-
-			pos.x += 1;
-			FillArea(coords, cells, pos, newCoords);
-			pos.x -= 2;
-			FillArea(coords, cells, pos, newCoords);
-			pos.x += 1;
-
-			pos.y += 1;
-			FillArea(coords, cells, pos, newCoords);
-
-			pos.y -= 2;
-			// ReSharper disable once TailRecursiveCall
-			FillArea(coords, cells, pos, newCoords);
+			return areas;
 		}
 
 		private bool IsInList(IEnumerable<List<Vector2Int>> areasCoords, Vector2Int pos)

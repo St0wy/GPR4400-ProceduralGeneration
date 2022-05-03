@@ -25,9 +25,14 @@ namespace ProcGen.ProceduralGeneration
 		[MustBeAssigned] [SerializeField] private Tilemap waterTilemap;
 		[MustBeAssigned] [SerializeField] private TileBase waterTile;
 		[SerializeField] private Size mapSize;
+
 		[SerializeField] private GeneratorType currentGeneratorType;
-		[SerializeField] private PerlinMapGenerator perlinMapGenerator;
-		[SerializeField] private CellularAutomatonMapGenerator cellularAutomatonMapGenerator;
+
+		[ConditionalField(nameof(currentGeneratorType), false, GeneratorType.PerlinNoise)] [SerializeField]
+		private PerlinMapGenerator perlinMapGenerator;
+
+		[ConditionalField(nameof(currentGeneratorType), false, GeneratorType.CellularAutomaton)] [SerializeField]
+		private CellularAutomatonMapGenerator cellularAutomatonMapGenerator;
 
 		private void Awake()
 		{

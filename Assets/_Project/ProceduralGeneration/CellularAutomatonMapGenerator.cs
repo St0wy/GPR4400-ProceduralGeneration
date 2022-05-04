@@ -7,16 +7,17 @@ using UnityEngine;
 
 namespace ProcGen.ProceduralGeneration
 {
-	public enum FloodFillBehaviour
+	public enum SolidMode
 	{
-		NoFloodFill,
-		KeepOnlyBiggestIsland,
-		RemoveSmallIslands,
+		SolidInside,
+		SolidOutside,
 	}
 
 	[Serializable]
 	public class CellularAutomatonMapGenerator : IMapGenerator
 	{
+		#region Fields
+
 		[OverrideLabel("Number of Generations")] [SerializeField]
 		private int nbrGenerations = 50;
 
@@ -30,6 +31,8 @@ namespace ProcGen.ProceduralGeneration
 			FloodFillBehaviour.RemoveSmallIslands)]
 		[SerializeField]
 		private int smallIslandSize = 30;
+
+		#endregion
 
 		public CellStatus[,] GenerateMap(Size mapSize)
 		{
@@ -74,8 +77,8 @@ namespace ProcGen.ProceduralGeneration
 
 					newCells[x, y] = cell switch
 					{
-						CellStatus.Ground when isStayingAlive => CellStatus.Ground,
-						CellStatus.Empty when isBecomingAlive => CellStatus.Ground,
+						CellStatus.Solid when isStayingAlive => CellStatus.Solid,
+						CellStatus.Empty when isBecomingAlive => CellStatus.Solid,
 						_ => CellStatus.Empty,
 					};
 				}
@@ -154,7 +157,7 @@ namespace ProcGen.ProceduralGeneration
 						while (true)
 						{
 							if (pos.x < 0 || pos.y < 0 || pos.x >= maxX || pos.y >= maxY) return;
-							if (!(cells[pos.x, pos.y] == CellStatus.Ground && areas[pos.x, pos.y] == 0)) return;
+							if (!(cells[pos.x, pos.y] == CellStatus.Solid && areas[pos.x, pos.y] == 0)) return;
 
 							areas[pos.x, pos.y] = currentId;
 							count++;
@@ -205,7 +208,7 @@ namespace ProcGen.ProceduralGeneration
 					if (newY < 0 || newY >= maxY) continue;
 					if (newX == x && newY == y) continue;
 
-					if (cells[newX, newY] == CellStatus.Ground)
+					if (cells[newX, newY] == CellStatus.Solid)
 					{
 						count++;
 					}
@@ -226,7 +229,7 @@ namespace ProcGen.ProceduralGeneration
 					double val = StaticRandom.NextDouble();
 					if (val <= chanceToBeGround)
 					{
-						cells[x, y] = CellStatus.Ground;
+						cells[x, y] = CellStatus.Solid;
 					}
 					else
 					{

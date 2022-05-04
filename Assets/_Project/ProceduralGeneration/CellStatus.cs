@@ -3,7 +3,7 @@
 	public enum CellStatus
 	{
 		Empty = 0,
-		Ground = 1,
+		Solid = 1,
 		Max,
 	}
 }

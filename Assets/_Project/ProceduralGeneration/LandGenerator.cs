@@ -1,7 +1,9 @@
 using System;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MyBox;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
@@ -19,10 +21,19 @@ namespace ProcGen.ProceduralGeneration
 		private const float MinSeed = 0f;
 		private const float MaxSeed = 300f;
 
-		[MustBeAssigned] [SerializeField] private Tilemap landTilemap;
+		[FormerlySerializedAs("landTilemap")] [MustBeAssigned] [SerializeField]
+		private Tilemap levelTilemap;
+
 		[MustBeAssigned] [SerializeField] private TileBase groundTile;
-		[MustBeAssigned] [SerializeField] private Tilemap waterTilemap;
-		[MustBeAssigned] [SerializeField] private TileBase waterTile;
+
+		[FormerlySerializedAs("waterTilemap")] [MustBeAssigned] [SerializeField]
+		private Tilemap backgroundTilemap;
+
+		[FormerlySerializedAs("waterTile")] [MustBeAssigned] [SerializeField]
+		private TileBase backgroundTile;
+
+		[SerializeField] private SolidMode solidMode;
+
 		[SerializeField] private Size mapSize;
 
 		[SerializeField] private GeneratorType currentGeneratorType;
@@ -75,26 +86,34 @@ namespace ProcGen.ProceduralGeneration
 
 		private void FillWater()
 		{
-			waterTilemap.ClearAllTiles();
+			backgroundTilemap.ClearAllTiles();
 			var area = new BoundsInt(0, 0, 0, mapSize.Width, mapSize.Height, 1);
 			var tileArray = new TileBase[area.size.x * area.size.y * area.size.z];
 			for (var i = 0; i < tileArray.Length; i++)
 			{
-				tileArray[i] = waterTile;
+				tileArray[i] = backgroundTile;
 			}
 
-			waterTilemap.SetTilesBlock(area, tileArray);
+			backgroundTilemap.SetTilesBlock(area, tileArray);
 		}
 
 		private void Generate(IMapGenerator generator)
 		{
 			var map = generator.GenerateMap(mapSize);
-			DrawMap(map);
+			if (solidMode == SolidMode.SolidInside)
+			{
+				DrawMap(map);
+			}
+			else
+			{
+				InvertMap(map);
+				DrawMap(map);
+			}
 		}
 
 		private void DrawMap(CellStatus[,] map)
 		{
-			landTilemap.ClearAllTiles();
+			levelTilemap.ClearAllTiles();
 			FillWater();
 
 			var area = new BoundsInt(0, 0, 0, mapSize.Width, mapSize.Height, 1);
@@ -104,14 +123,39 @@ namespace ProcGen.ProceduralGeneration
 			{
 				for (var y = 0; y < mapSize.Height; y++)
 				{
-					if (map[x, y] == CellStatus.Ground)
+					if (map[x, y] == CellStatus.Solid)
 					{
 						tileArray[x + (y * area.size.y)] = groundTile;
 					}
 				}
 			}
 
-			landTilemap.SetTilesBlock(area, tileArray);
+			levelTilemap.SetTilesBlock(area, tileArray);
+		}
+
+		private static void InvertMap(CellStatus[,] map)
+		{
+			int maxX = map.GetLength(0);
+			int maxY = map.GetLength(1);
+
+			for (var x = 0; x < maxX; x++)
+			{
+				for (var y = 0; y < maxY; y++)
+				{
+					switch (map[x, y])
+					{
+						case CellStatus.Empty:
+							map[x, y] = CellStatus.Solid;
+							break;
+						case CellStatus.Solid:
+							map[x, y] = CellStatus.Empty;
+							break;
+						case CellStatus.Max:
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+				}
+			}
 		}
 	}
 }

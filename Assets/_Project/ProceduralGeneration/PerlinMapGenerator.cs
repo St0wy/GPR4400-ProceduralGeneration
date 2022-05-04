@@ -36,7 +36,7 @@ namespace ProcGen.ProceduralGeneration
 					float sample = Mathf.PerlinNoise(xCoord, yCoord);
 					if (sample > Threshold)
 					{
-						world[x, y] = CellStatus.Ground;
+						world[x, y] = CellStatus.Solid;
 					}
 					else
 					{

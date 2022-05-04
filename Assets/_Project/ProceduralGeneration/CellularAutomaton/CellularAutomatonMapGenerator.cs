@@ -5,14 +5,8 @@ using System.Threading.Tasks;
 using MyBox;
 using UnityEngine;
 
-namespace ProcGen.ProceduralGeneration
+namespace ProcGen.ProceduralGeneration.CellularAutomaton
 {
-	public enum SolidMode
-	{
-		SolidInside,
-		SolidOutside,
-	}
-
 	[Serializable]
 	public class CellularAutomatonMapGenerator : IMapGenerator
 	{

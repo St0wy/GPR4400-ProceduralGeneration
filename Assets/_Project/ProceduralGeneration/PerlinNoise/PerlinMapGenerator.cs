@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MyBox;
 using UnityEngine;
 
-namespace ProcGen.ProceduralGeneration
+namespace ProcGen.ProceduralGeneration.PerlinNoise
 {
 	[Serializable]
 	public class PerlinMapGenerator : IMapGenerator

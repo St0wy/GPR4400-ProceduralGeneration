@@ -1,7 +1,8 @@
 using System;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MyBox;
+using ProcGen.ProceduralGeneration.CellularAutomaton;
+using ProcGen.ProceduralGeneration.PerlinNoise;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
@@ -100,14 +101,17 @@ namespace ProcGen.ProceduralGeneration
 		private void Generate(IMapGenerator generator)
 		{
 			var map = generator.GenerateMap(mapSize);
-			if (solidMode == SolidMode.SolidInside)
+			switch (solidMode)
 			{
-				DrawMap(map);
-			}
-			else
-			{
-				InvertMap(map);
-				DrawMap(map);
+				case SolidMode.SolidInside:
+					DrawMap(map);
+					break;
+				case SolidMode.SolidOutside:
+					InvertMap(map);
+					DrawMap(map);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 

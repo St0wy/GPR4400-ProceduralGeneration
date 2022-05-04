@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ProcGen.ProceduralGeneration
+namespace ProcGen.ProceduralGeneration.CellularAutomaton
 {
 	public static class Utils
 	{

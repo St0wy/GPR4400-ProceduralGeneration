@@ -53,28 +53,14 @@ namespace ProcGen.ProceduralGeneration
 			switch (currentGeneratorType)
 			{
 				case GeneratorType.PerlinNoise:
-					GenerateWithPerlin();
+					Generate(perlinMapGenerator);
 					break;
 				case GeneratorType.CellularAutomaton:
-					GenerateWithCellularAutomaton();
+					Generate(cellularAutomatonMapGenerator);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
-		}
-
-		[ButtonMethod]
-		public void GenerateWithPerlin()
-		{
-			Generate(perlinMapGenerator);
-		}
-
-		[ButtonMethod]
-		public void GenerateWithCellularAutomaton()
-		{
-			landTilemap.ClearAllTiles();
-			FillWater();
-			Generate(cellularAutomatonMapGenerator);
 		}
 
 		[ButtonMethod]

@@ -9,6 +9,7 @@ namespace ProcGen.ProceduralGeneration
 {
 	public enum FloodFillBehaviour
 	{
+		NoFloodFill,
 		KeepOnlyBiggestIsland,
 		RemoveSmallIslands,
 	}
@@ -34,7 +35,8 @@ namespace ProcGen.ProceduralGeneration
 		{
 			var cells = RandomFill(mapSize);
 			cells = ComputeAutomaton(cells);
-			cells = RemoveSmallIslands(cells);
+			if (floodFillBehaviour != FloodFillBehaviour.NoFloodFill)
+				cells = RemoveSmallIslands(cells);
 			return cells;
 		}
 
